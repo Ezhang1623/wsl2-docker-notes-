@@ -1,0 +1,30 @@
+## 常用命令与排查思路
+> 下面的命令和排查步骤，
+### 🐧 一、WSL2 常用命令
+| 命令 | 作用 | 使用场景 |
+| :--- | :--- | :--- |
+| `wsl --status` | 查看 WSL 当前状态 | 检查是否安装成功 |
+| `wsl -l -v` | 列出已安装的 Linux 发行版及版本 | 确认 Ubuntu 是否运行在 WSL2 |
+| `wsl --shutdown` | 彻底关闭 WSL | Docker 卡死时，用来强制重启 WSL 底座 |
+| `wsl --update` | 手动更新 WSL 内核 | 内核过旧导致 Docker 报错时使用 |
+### 🐳 二、Docker 常用命令
+| 命令 | 作用 | 使用场景 |
+| :--- | :--- | :--- |
+| `docker ps -a` | 查看所有容器（包括已停止的） | 确认 `whisper-assistant` 容器是否在运行 |
+| `docker start <容器名>` | 启动已存在的容器 | 重启电脑后，唤醒之前的容器 |
+| `docker stop <容器名>` | 停止容器 | 用完 Whisper 后，及时释放内存和电量 |
+| `docker logs <容器名>` | 查看容器运行日志 | 排查容器为什么报错或卡死 |
+| `docker pull <镜像名>` | 拉取镜像 | 下载语音识别模型（千万不要加 `docker.io/` 前缀） |
+### 🔍 三、排查思路（逻辑决策树）
+**1. 下载/安装卡死（速度0%或0.2%）**
+*   排查：确认是否是校园网/公司网络限制。
+*   解决：放弃电脑下载，改用**手机流量（关WiFi走4G/5G）**打开 GitHub 下载离线包，传回电脑安装。
+**2. Docker 启动报错 “WSL not installed”**
+*   排查：Docker 必须依赖 WSL2 运行。
+*   解决：先检查任务管理器→性能→CPU→虚拟化是否开启，再去“启用或关闭 Windows 功能”中勾选“适用于 Linux 的 Windows 子系统”和“虚拟机平台”。重启电脑后再打开 Docker。
+**3. 拉取镜像报错 “不在白名单”**
+*   排查：国内镜像加速站（如 DaoCloud）为了安全，限制了个人作者制作的镜像。
+*   解决：去 Docker Engine 设置里换成更宽松的源（如 `https://docker.1panel.live`），重新拉取。不要尝试加 `docker.io/` 直连官方，国内大概率会被卡死。
+**4. 容器跑起来了，但功能不正常（如没有声音/不自动打字）**
+*   排查：去 Docker Desktop 点击 `Containers` → 点击 `whisper-assistant` → 查看 **Logs（日志）**。
+*   思路：日志里报错提示 `Invalid audio data`，说明是 Windows 音频工具（SoX）没捕获到麦克风声音。解决方法：给 Windows 添加环境变量 `AUDIODRIVER=waveaudio`，重启电脑。
