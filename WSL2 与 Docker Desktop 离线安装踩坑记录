@@ -1,0 +1,41 @@
+# WSL2 与 Docker Desktop 离线安装踩坑记录
+
+## 遇到的问题
+- **WSL 安装无限卡死**：校园网环境下，在 PowerShell 执行 `wsl --install` 或 `wsl --update --web-download`，进度条无限卡在 0.2% 或直接超时中断。
+- **离线下载遭遇四面楚歌**：尝试用 GitHub 加速链接（报 404、ERR_SSL 错误）、国内网盘（非会员极慢）、手机开热点用电脑下载（勉强跑到 1% 后停滞）。
+- **Docker 启动报错**：Docker Desktop 安装完成后，双击启动弹出红色错误框：“WSL not installed”。
+- **拉取镜像遭遇“白名单封锁”**：执行 `docker run/pull` 拉取非官方镜像时，报错 `这镜像不在白名单`，加 `docker.io/` 前缀直连官方源又完全卡死。
+
+## 原因分析
+- **网络拦截**：校园网对微软、GitHub、Docker 官方等国外服务器进行了严格的无差别拦截，导致基于电脑的在线安装命令几乎瘫痪。
+- **WSL 依赖关系**：Docker Desktop 极度依赖 WSL 2 环境。WSL 核心引擎没装好，Docker 就无法启动。
+- **国内镜像加速站限制**：为了减轻服务器压力并合规，很多国内镜像加速器（如 DaoCloud）设置了白名单机制，只允许拉取官方常用镜像，个人开发者制作的镜像会被直接拒绝。
+
+## 最终有效的解决方案
+
+### 1. 解决 WSL2 内核（核心难点）
+- **尝试 1（失败）**：在 **Microsoft Store（微软商店）** 下载 Ubuntu，商店下载速度相对较快，但**实测发现，打开 Ubuntu 后依然会卡在更新 WSL2 的环节**。
+- **尝试 2（最终成功）**：**用手机流量（关闭 WiFi，走 4G/5G）**，在手机浏览器上直接访问 GitHub 发布页，下载 `wsl.2.7.14.0.x64.msi` 离线安装包。
+- **操作步骤**：将下载好的 `.msi` 文件通过微信文件传输助手传回电脑，在电脑上**右键“以管理员身份运行”**，安装完毕后**重启电脑**。
+
+### 2. 解决 Docker Desktop 安装与启动
+- 确认电脑 BIOS 中已开启“虚拟化”（任务管理器 -> 性能 -> CPU -> 虚拟化：已启用）。
+- 在“启用或关闭 Windows 功能”中，勾选“适用于 Linux 的 Windows 子系统”和“虚拟机平台”，重启电脑。
+- 双击 Docker Desktop 安装包进行安装，启动后跳过登录（Skip）。左下角出现绿色的 `Engine running` 即表示成功。
+
+### 3. 解决 Docker 镜像加速与白名单限制
+- **修复 JSON 配置**：清空 `Docker Engine` 文本框，填入完整的包含外层大括号的 JSON 配置。推荐使用不限制白名单的镜像源：
+  ```json
+  {
+    "builder": {
+      "gc": {
+        "defaultKeepStorage": "20GB",
+        "enabled": true
+      }
+    },
+    "experimental": false,
+    "registry-mirrors": [
+      "https://docker.1panel.live",
+      "https://docker.mirrors.ustc.edu.cn"
+    ]
+  }
