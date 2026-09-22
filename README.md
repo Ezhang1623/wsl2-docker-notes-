@@ -19,8 +19,9 @@
 - [ ] 常见报错与排查
 - [ ] 代理与镜像源配置
 - [ ] 合规与授权提醒
-
 ## 参考来源
-- Microsoft WSL 官方文档（链接）
-- Docker Desktop 官方文档（链接）
-- 其他开源教程（后续注明链接和许可证）
+
+- [Microsoft WSL 官方文档](https://learn.microsoft.com/zh-cn/windows/wsl/)
+- [Docker Desktop 官方文档](https://docs.docker.com/desktop/)
+- [清华大学开源软件镜像站](https://mirrors.tuna.tsinghua.edu.cn/)
+- [WSL GitHub Releases 下载页](https://github.com/microsoft/WSL/releases)
